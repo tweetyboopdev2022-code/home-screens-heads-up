@@ -1,7 +1,7 @@
 {
   "id": "heads-up",
   "name": "Heads-up",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Only what needs attention right now: bins going out, overdue chores per person, Souper Cubes running low, tomorrow's dinner not planned. Says All clear otherwise.",
   "author": "Tanya",
   "license": "MIT",
@@ -18,7 +18,9 @@
     "souperProject": "Souper Cubes",
     "lowAt": 1,
     "mealNudge": true,
-    "maxItems": 3
+    "maxItems": 3,
+    "show": "all",
+    "binColors": "Trash:#a8a29e, Recycling:#5ca8ff, Compost:#e19956"
   },
   "defaultSize": {
     "w": 360,
@@ -32,6 +34,20 @@
   "configSchema": {
     "type": "object",
     "properties": {
+      "show": {
+        "type": "string",
+        "title": "Show",
+        "enum": [
+          "bins",
+          "all"
+        ],
+        "enumLabels": [
+          "Bins only",
+          "Everything (bins, chores, Souper Cubes, dinner)"
+        ],
+        "ui:widget": "select",
+        "ui:group": "Content"
+      },
       "title": {
         "type": "string",
         "title": "Title",
@@ -91,6 +107,12 @@
       "colors": {
         "type": "string",
         "title": "Person colours",
+        "ui:widget": "text",
+        "ui:group": "Look"
+      },
+      "binColors": {
+        "type": "string",
+        "title": "Bin colours",
         "ui:widget": "text",
         "ui:group": "Look"
       }

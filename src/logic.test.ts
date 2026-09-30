@@ -9,3 +9,8 @@ describe('pickups', () => {
   });
   it('dates', () => { expect(addDays('2026-09-30', 1)).toBe('2026-10-01'); expect(joinAnd(['a', 'b', 'c'])).toBe('a, b & c'); });
 });
+import { nextPickup } from './logic';
+describe('next', () => {
+  const ps = parsePickups('Trash: Wed every 2 weeks from 2026-09-16, Recycling: Wed every 2 weeks from 2026-09-23, Compost: Thu weekly');
+  it('finds next', () => { expect(nextPickup(ps[0], '2026-10-01')).toBe('2026-10-14'); expect(nextPickup(ps[1], '2026-10-01')).toBe('2026-10-07'); expect(nextPickup(ps[2], '2026-10-01')).toBe('2026-10-01'); });
+});

@@ -31,3 +31,8 @@ export function parseMeal(content: string): { name: string; count: number } {
   return { name: c, count: 0 };
 }
 export const joinAnd = (a: string[]) => a.length <= 1 ? a.join('') : `${a.slice(0, -1).join(', ')} & ${a[a.length - 1]}`;
+/** Next pickup on or after `from` (YYYY-MM-DD), within 8 weeks. */
+export function nextPickup(p: Pickup, from: string): string | null {
+  for (let i = 0; i < 56; i++) { const k = addDays(from, i); if (isPickup(p, k)) return k; }
+  return null;
+}

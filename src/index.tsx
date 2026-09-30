@@ -3,7 +3,7 @@
 import React from 'react';
 import type { PluginComponentProps } from './hs-plugin';
 import { frame, ink, Icon, I, sdk, useNow, dayKey, Fit, Shape } from './ui';
-import { parsePickups, isPickup, addDays, parseMeal, joinAnd } from './logic';
+import { parsePickups, isPickup, addDays, parseMeal, joinAnd, nextPickup } from './logic';
 
 const C = (x: number, y: number, r: number): Shape => ({ c: [x, y, r] });
 const BIN: Shape[] = ['M3 6h18', 'M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6', 'M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2'];
@@ -71,6 +71,46 @@ export default function HeadsUp({ config, style, timezone: tz }: PluginComponent
     if (i >= 0) sdk()?.emit?.({ type: 'navigate', direction: 'screen', screenIndex: i });
   };
   const title = String(config.title ?? 'Heads-up');
+
+  if (String(config.show ?? 'all') === 'bins') {
+    const binColors: Record<string, string> = {};
+    String(config.binColors ?? 'Trash:#a8a29e, Recycling:#5ca8ff, Compost:#e19956').split(',').forEach((p) => { const [k, v] = p.split(':').map((x) => x.trim()); if (k && v) binColors[k.toLowerCase()] = v; });
+    // After noon on pickup day, count from tomorrow.
+    const from = hour >= 12 ? tmr : today;
+    const rows = pickups.map((p) => ({ p, next: nextPickup(p, from) })).filter((r) => r.next).sort((a, b) => a.next!.localeCompare(b.next!));
+    const when = (k: string) => {
+      if (k === today) return 'Today';
+      if (k === tmr) return 'Tomorrow';
+      const d = new Date(k + 'T12:00:00Z');
+      const days = Math.round((Date.parse(k) - Date.parse(today)) / 86400000);
+      return days < 7 ? new Intl.DateTimeFormat(undefined, { weekday: 'long', timeZone: 'UTC' }).format(d)
+        : new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' }).format(d);
+    };
+    return (
+      <div style={frame(style)}>
+        <div style={{ fontSize: '0.7em', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.55, marginBottom: '0.55em' }}>{String(config.title ?? 'Bins')}</div>
+        <Fit min={0.6} max={1.35} justify="flex-start">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4em' }}>
+            {rows.map(({ p, next }) => {
+              const col = binColors[p.label.toLowerCase()] ?? '#60a5fa';
+              const urgent = next === tmr || (next === today && hour < 12);
+              const tag = next === tmr ? 'Out tonight' : next === today && hour < 12 ? 'Pickup this morning' : '';
+              return (
+                <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: '0.6em', padding: '0.4em 0.6em', borderRadius: '0.6em', background: urgent ? `color-mix(in srgb, ${col} 16%, transparent)` : 'transparent' }}>
+                  <span style={{ width: '1.7em', height: '1.7em', flexShrink: 0, borderRadius: '0.5em', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `color-mix(in srgb, ${col} ${urgent ? 30 : 16}%, transparent)`, color: col }}>
+                    <Icon d={BIN} size="1em" stroke={2} />
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: '0.95em', fontWeight: urgent ? 600 : 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.label}</span>
+                  {tag ? <span style={{ fontSize: '0.7em', fontWeight: 700, padding: '0.2em 0.65em', borderRadius: '999px', background: col, color: '#111', whiteSpace: 'nowrap' }}>{tag}</span>
+                    : <span style={{ fontSize: '0.8em', opacity: 0.6, whiteSpace: 'nowrap' }}>{when(next!)}</span>}
+                </div>
+              );
+            })}
+          </div>
+        </Fit>
+      </div>
+    );
+  }
 
   return (
     <div style={frame(style)}>
